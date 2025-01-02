@@ -15,7 +15,7 @@ def signal_handler(sig, frame):
 
 signal.signal(signal.SIGINT, signal_handler)
 
-CONFIG_DIR = Path.home() / '.ghplus'
+CONFIG_DIR = Path.home() / '.ghp'
 CONFIG_FILE = CONFIG_DIR / 'config'
 
 def save_config(token: str):
@@ -45,7 +45,7 @@ def add_user_to_repo(repo_name: str, username: str, permission: str):
     token = get_token()
     if not token:
         print("Error: GitHub token not configured")
-        print("Please run: ghplus configure")
+        print("Please run: ghp configure")
         sys.exit(1)
 
     try:
@@ -65,8 +65,8 @@ def add_user_to_repo(repo_name: str, username: str, permission: str):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='interact with github through the cli!',
-        usage='ghplus <command> <subcommand> [flags]'
+        description='Configure your GitHub settings through the CLI',
+        usage='ghp <command> <subcommand> [flags]'
     )
     
     subparsers = parser.add_subparsers(dest='command')
