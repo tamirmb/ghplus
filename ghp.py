@@ -145,6 +145,28 @@ def remove_user_from_repo(repo_name: str, username: str):
       print(f"Error: {e.data.get('message', str(e))}")
     sys.exit(1)
 
+def list_org_secrets():
+  token = get_token()
+  org = get_org()
+
+  if not token:
+    print("Error: GitHub token not configured")
+    print("Please run: ghp configure")
+    sys.exit(1)
+
+  try:
+    g = Github(token)
+    secrets = g.get_organization(org).get_secrets()
+    print(secrets)
+  except GithubException as e:
+    if e.status == 404:
+      print(f"Error: Organization '{org}' not found or you don't have access to it")
+    elif e.status == 401:
+      print("Error: Invalid GitHub token")
+    else:
+      print(f"Error: {e.data.get('message', str(e))}")
+    sys.exit(1)
+  
 
 def main():
     parser = argparse.ArgumentParser(
@@ -176,6 +198,12 @@ def main():
       choices=['read', 'write', 'admin'],
       help='permission level for the user'
     )
+
+    # List secrets command
+    # Secrets command
+    secrets_parser = subparsers.add_parser('secrets', help='Manage organization secrets')
+    secrets_subparsers = secrets_parser.add_subparsers(dest='secrets_command')
+    secrets_ls_parser = secrets_subparsers.add_parser('ls', help='List organization secrets')
 
     args = parser.parse_args()
 
@@ -214,6 +242,8 @@ def main():
       remove_user_from_repo(args.repo_name, args.username)
     elif args.command == 'repo' and args.repo_command == 'userls':
       list_users_in_repo(args.repo_name)
+    elif args.command == 'secrets' and args.secrets_command == 'ls':
+      list_org_secrets()
     else:
       repo_parser.print_help()
 
