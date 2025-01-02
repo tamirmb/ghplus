@@ -51,35 +51,79 @@ def get_org():
         return config.get('github_org')
     return None
 
+def summarize_permissions(permissions):
+    """
+    Convert GitHub's permission object into a simple permission level string.
+    """
+    if permissions.admin:
+        return 'admin'
+    if permissions.maintain:
+        return 'maintain'
+    if permissions.push:
+        return 'write'
+    if permissions.triage:
+        return 'triage'
+    if permissions.pull:
+        return 'read'
+    return 'none'
+
+def list_users_in_repo(repo_name: str):
+  """List all users in a GitHub repository."""
+  token = get_token()
+  org = get_org()
+
+  if not token:
+    print("Error: GitHub token not configured")
+    print("Please run: ghp configure")
+    sys.exit(1)
+
+  try:
+    g = Github(token)
+    target = g.get_organization(org) if org else g.get_user()
+    repo = target.get_repo(repo_name)
+    users = repo.get_collaborators()
+    print(f"Users in {repo_name}:")
+    for user in users:
+        permission_level = summarize_permissions(user.permissions)
+        print(f"  - {user.login} ({user.type}) [{permission_level}]")
+  except GithubException as e:
+    if e.status == 404:
+      print(f"Error: Repository '{repo_name}' not found or you don't have access to it")
+    elif e.status == 401:
+      print("Error: Invalid GitHub token")
+    else:
+      print(f"Error: {e.data.get('message', str(e))}")
+    sys.exit(1)
+
 def add_user_to_repo(repo_name: str, username: str, permission: str):
-    """Add a user as a collaborator to a GitHub repository."""
-    token = get_token()
-    org = get_org()
+  """Add a user as a collaborator to a GitHub repository."""
+  token = get_token()
+  org = get_org()
 
-    if not token:
-        print("Error: GitHub token not configured")
-        print("Please run: ghp configure")
-        sys.exit(1)
+  if not token:
+      print("Error: GitHub token not configured")
+      print("Please run: ghp configure")
+      sys.exit(1)
 
-    try:
-        g = Github(token)
-        target = g.get_organization(org) if org else g.get_user()
-        repo = target.get_repo(repo_name)
-        repo.add_to_collaborators(username, permission)
-        print(f"✓ Successfully added {username} to {repo_name} with {permission} permissions")
-    except GithubException as e:
-        if e.status == 404:
-            print(f"Error: Repository '{repo_name}' not found or you don't have access to it")
-        elif e.status == 401:
-            print("Error: Invalid GitHub token")
-        else:
-            print(f"Error: {e.data.get('message', str(e))}")
-        sys.exit(1)
+  try:
+    g = Github(token)
+    target = g.get_organization(org) if org else g.get_user()
+    repo = target.get_repo(repo_name)
+    repo.add_to_collaborators(username, permission)
+    print(f"✓ Successfully added {username} to {repo_name} with {permission} permissions")
+  except GithubException as e:
+    if e.status == 404:
+      print(f"Error: Repository '{repo_name}' not found or you don't have access to it")
+    elif e.status == 401:
+      print("Error: Invalid GitHub token")
+    else:
+      print(f"Error: {e.data.get('message', str(e))}")
+    sys.exit(1)
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Configure your GitHub settings through the CLI',
-        usage='ghp <command> <subcommand> [flags]'
+      description='Configure your GitHub settings through the CLI',
+      usage='ghp <command> <subcommand> [flags]'
     )
     
     subparsers = parser.add_subparsers(dest='command')
@@ -94,50 +138,54 @@ def main():
     repo_parser.add_argument('repo_name', metavar='<repo_name>', help='name of the repository')
     repo_subparsers = repo_parser.add_subparsers(dest='repo_command')
 
+    # User list command
+    userls = repo_subparsers.add_parser('userls', help='List users in the repository')
+
     # Add user command
     adduser_parser = repo_subparsers.add_parser('adduser', help='Add a user to the repository')
     adduser_parser.add_argument('username', metavar='<username>', help='username to add')
     adduser_parser.add_argument('permission', 
-        choices=['read', 'write', 'admin'],
-        help='permission level for the user'
+      choices=['read', 'write', 'admin'],
+      help='permission level for the user'
     )
 
     args = parser.parse_args()
 
     if not args.command:
-        parser.print_help()
-        return
+      parser.print_help()
+      return
 
     if args.command == 'configure':
-        token = args.token or getpass("Enter your GitHub Personal Access Token: ").strip()
-        org = args.org or input("Enter your GitHub Organization: ").strip()
+      token = args.token or getpass("Enter your GitHub Personal Access Token: ").strip()
+      org = args.org or input("Enter your GitHub Organization: ").strip()
 
-        if token:
-            try:
-                g = Github(token)
-                g.get_user().login
-            except GithubException:
-                print("Error: Invalid GitHub token")
-                sys.exit(1)
-        else:
-            print("Error: Token cannot be empty")
-            sys.exit(1)
+      if token:
+        try:
+          g = Github(token)
+          g.get_user().login
+        except GithubException:
+          print("Error: Invalid GitHub token")
+          sys.exit(1)
+      else:
+        print("Error: Token cannot be empty")
+        sys.exit(1)
 
-        if org:
-            try:    
-                g = Github(token)
-                g.get_organization(org)
-            except GithubException:
-                print("Error: Invalid GitHub organization")
-                sys.exit(1)
+      if org:
+        try:    
+          g = Github(token)
+          g.get_organization(org)
+        except GithubException:
+          print("Error: Invalid GitHub organization")
+          sys.exit(1)
 
-        save_config(token, org)
+      save_config(token, org)
     
     elif args.command == 'repo' and args.repo_command == 'adduser':
-        add_user_to_repo(args.repo_name, args.username, args.permission)
-    
+      add_user_to_repo(args.repo_name, args.username, args.permission)
+    elif args.command == 'repo' and args.repo_command == 'userls':
+      list_users_in_repo(args.repo_name)
     else:
-        repo_parser.print_help()
+      repo_parser.print_help()
 
 if __name__ == "__main__":
-    main()
+  main()
