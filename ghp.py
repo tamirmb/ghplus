@@ -146,26 +146,32 @@ def remove_user_from_repo(repo_name: str, username: str):
     sys.exit(1)
 
 def list_org_secrets():
-  token = get_token()
-  org = get_org()
+    """List all organization secrets."""
+    token = get_token()
+    org = get_org()
 
-  if not token:
-    print("Error: GitHub token not configured")
-    print("Please run: ghp configure")
-    sys.exit(1)
+    if not token:
+        print("Error: GitHub token not configured")
+        print("Please run: ghp configure")
+        sys.exit(1)
 
-  try:
-    g = Github(token)
-    secrets = g.get_organization(org).get_secrets()
-    print(secrets)
-  except GithubException as e:
-    if e.status == 404:
-      print(f"Error: Organization '{org}' not found or you don't have access to it")
-    elif e.status == 401:
-      print("Error: Invalid GitHub token")
-    else:
-      print(f"Error: {e.data.get('message', str(e))}")
-    sys.exit(1)
+    try:
+        g = Github(token)
+        org_obj = g.get_organization(org)
+        secrets = org_obj.get_secrets()
+        print(f"\nSecrets for {org}:")
+        
+        for secret in secrets:
+            print(f"  • {secret.name}")
+            
+    except GithubException as e:
+        if e.status == 404:
+            print(f"Error: Organization '{org}' not found or you don't have access to it")
+        elif e.status == 401:
+            print("Error: Invalid GitHub token")
+        else:
+            print(f"Error: {e.data.get('message', str(e))}")
+        sys.exit(1)
   
 
 def main():
