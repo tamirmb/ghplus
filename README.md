@@ -1,6 +1,6 @@
 ## GitHub Plus
 
-GitHub plus (ghp) is a CLI tool that lets you configure various GitHub settings.
+A superset of the official GitHub CLI tools with a bunch of commands that they should have included, but for some reason didn't.
 
 ### Setup
 
