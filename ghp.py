@@ -120,6 +120,32 @@ def add_user_to_repo(repo_name: str, username: str, permission: str):
       print(f"Error: {e.data.get('message', str(e))}")
     sys.exit(1)
 
+def remove_user_from_repo(repo_name: str, username: str):
+  """Remove a user from a GitHub repository."""
+  token = get_token()
+  org = get_org()
+
+  if not token:
+    print("Error: GitHub token not configured")
+    print("Please run: ghp configure")
+    sys.exit(1)
+  
+  try:
+    g = Github(token)
+    target = g.get_organization(org) if org else g.get_user()
+    repo = target.get_repo(repo_name)
+    repo.remove_from_collaborators(username)
+    print(f"✓ Successfully removed {username} from {repo_name}")
+  except GithubException as e:
+    if e.status == 404:
+      print(f"Error: Repository '{repo_name}' not found or you don't have access to it")
+    elif e.status == 401:
+      print("Error: Invalid GitHub token")
+    else:
+      print(f"Error: {e.data.get('message', str(e))}")
+    sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
       description='Configure your GitHub settings through the CLI',
@@ -137,9 +163,11 @@ def main():
     repo_parser = subparsers.add_parser('repo', help='Manage repositories')
     repo_parser.add_argument('repo_name', metavar='<repo_name>', help='name of the repository')
     repo_subparsers = repo_parser.add_subparsers(dest='repo_command')
+    userls_parser = repo_subparsers.add_parser('userls', help='List users in the repository')
 
-    # User list command
-    userls = repo_subparsers.add_parser('userls', help='List users in the repository')
+    # Remove user command
+    rmuser_parser = repo_subparsers.add_parser('rmuser', help='Remove a user from the repository')
+    rmuser_parser.add_argument('username', metavar='<username>', help='username to remove')
 
     # Add user command
     adduser_parser = repo_subparsers.add_parser('adduser', help='Add a user to the repository')
@@ -182,6 +210,8 @@ def main():
     
     elif args.command == 'repo' and args.repo_command == 'adduser':
       add_user_to_repo(args.repo_name, args.username, args.permission)
+    elif args.command == 'repo' and args.repo_command == 'rmuser':
+      remove_user_from_repo(args.repo_name, args.username)
     elif args.command == 'repo' and args.repo_command == 'userls':
       list_users_in_repo(args.repo_name)
     else:

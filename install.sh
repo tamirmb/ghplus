@@ -15,10 +15,8 @@ fi
 # Install dependencies
 pip3 install -r requirements.txt
 
-# Make the script executable
-chmod +x ghp.py
-
 # Copy to /usr/local/bin
 cp ghp.py /usr/local/bin/ghp
 
 echo "✓ Installation complete! You can now run 'ghp' from anywhere"
+
