@@ -18,10 +18,10 @@ signal.signal(signal.SIGINT, signal_handler)
 CONFIG_DIR = Path.home() / '.ghp'
 CONFIG_FILE = CONFIG_DIR / 'config'
 
-def save_config(token: str):
-    """Save GitHub token to config file."""
+def save_config(token: str, org: str):
+    """Save GitHub token and organization to config file."""
     CONFIG_DIR.mkdir(exist_ok=True, mode=0o700)
-    config = {'github_token': token}
+    config = {'github_token': token, 'github_org': org}
     CONFIG_FILE.write_text(json.dumps(config))
     CONFIG_FILE.chmod(0o600)
     print("✓ Configuration saved successfully")
@@ -40,9 +40,22 @@ def get_token():
             return None
     return None
 
+def get_org():
+    """Get GitHub organization from config file or environment."""
+    org = os.getenv('GITHUB_ORG')
+    if org:
+        return org
+    
+    if CONFIG_FILE.exists():
+        config = json.loads(CONFIG_FILE.read_text())
+        return config.get('github_org')
+    return None
+
 def add_user_to_repo(repo_name: str, username: str, permission: str):
     """Add a user as a collaborator to a GitHub repository."""
     token = get_token()
+    org = get_org()
+
     if not token:
         print("Error: GitHub token not configured")
         print("Please run: ghp configure")
@@ -50,8 +63,8 @@ def add_user_to_repo(repo_name: str, username: str, permission: str):
 
     try:
         g = Github(token)
-        user = g.get_user()
-        repo = user.get_repo(repo_name)
+        target = g.get_organization(org) if org else g.get_user()
+        repo = target.get_repo(repo_name)
         repo.add_to_collaborators(username, permission)
         print(f"✓ Successfully added {username} to {repo_name} with {permission} permissions")
     except GithubException as e:
@@ -74,6 +87,7 @@ def main():
     # Configure command
     configure_parser = subparsers.add_parser('configure', help='Configure GitHub credentials')
     configure_parser.add_argument('--token', help='GitHub Personal Access Token')
+    configure_parser.add_argument('--org', help='GitHub Organization')
 
     # Repository command
     repo_parser = subparsers.add_parser('repo', help='Manage repositories')
@@ -96,17 +110,28 @@ def main():
 
     if args.command == 'configure':
         token = args.token or getpass("Enter your GitHub Personal Access Token: ").strip()
+        org = args.org or input("Enter your GitHub Organization: ").strip()
+
         if token:
             try:
                 g = Github(token)
                 g.get_user().login
-                save_config(token)
             except GithubException:
                 print("Error: Invalid GitHub token")
                 sys.exit(1)
         else:
             print("Error: Token cannot be empty")
             sys.exit(1)
+
+        if org:
+            try:    
+                g = Github(token)
+                g.get_organization(org)
+            except GithubException:
+                print("Error: Invalid GitHub organization")
+                sys.exit(1)
+
+        save_config(token, org)
     
     elif args.command == 'repo' and args.repo_command == 'adduser':
         add_user_to_repo(args.repo_name, args.username, args.permission)
