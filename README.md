@@ -10,13 +10,19 @@ First, install `ghp` so you can use it from anywhere:
 sudo ./install.sh
 ```
 
-Then, [generate a GitHub personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) and configure `ghp` with your token:
+Then, [generate a GitHub personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) with the following scopes:
+
+- `repo`
+
+### Configuration
+
+Configure `ghp` and enter your personal access token:
 
 ```bash
 ghp configure
 ```
 
-Your personal access token <ins>**is not encrypted**</ins> and stored in `~/.ghp/config`.
+Your personal access token <ins>**is written as plaintext**</ins> to `~/.ghp/config`.
 
 ### Commands
 
