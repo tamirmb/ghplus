@@ -29,4 +29,10 @@ Your personal access token <ins>**is written as plaintext**</ins> to `~/.ghp/con
 ```bash
 # Add a user to one of your repositories
 ghp repo [repo] adduser [user] [read|write|admin]
+
+# Remove a user from one of your repositories
+ghp repo [repo] rmuser [user]
+
+# List organization secrets
+ghp secrets ls
 ```
