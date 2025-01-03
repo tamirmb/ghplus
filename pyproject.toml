@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ghp"
+version = "0.0.1"
+description = "CLI tool to configure various GitHub settings"
+authors = [
+    { name="Tamir MB", email="tmelzerb@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "PyGithub>=2.5.0",
+    "urllib3==1.26.18"
+]
+
+[project.scripts]
+ghp = "ghp:main"

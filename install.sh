@@ -1,22 +1,14 @@
 #!/bin/bash
 
-# Check if script is run with sudo
-if [ "$EUID" -ne 0 ]; then 
-    echo "Please run with sudo"
-    exit 1
-fi
+# Create virtual environment
+python3 -m venv .venv
 
-# Clean up existing installation
-if [ -f "/usr/local/bin/ghp" ]; then
-    echo "Removing existing installation..."
-    rm /usr/local/bin/ghp
-fi
+# Activate virtual environment
+source .venv/bin/activate
 
-# Install dependencies
-pip3 install -r requirements.txt
+# Install package in editable mode
+pip install -e .
 
-# Copy to /usr/local/bin
-cp ghp.py /usr/local/bin/ghp
-
-echo "✓ Installation complete! You can now run 'ghp' from anywhere"
+echo "✓ Installation complete!"
+echo "To use the tool, run: python3 -m ghp"
 
