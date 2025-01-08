@@ -145,6 +145,56 @@ def remove_user_from_repo(repo_name: str, username: str):
       print(f"Error: {e.data.get('message', str(e))}")
     sys.exit(1)
 
+def add_secret_to_repo(repo_name: str, secret_name: str = None, secret_value: str = None):
+    """Add a secret to a GitHub repository."""
+    token = get_token()
+    org = get_org()
+
+    if not token:
+        print("Error: GitHub token not configured")
+        print("Please run: ghp configure")
+        sys.exit(1)
+
+    # Prompt for secret name if not provided
+    if not secret_name:
+        secret_name = input("Enter secret name: ").strip()
+        if not secret_name:
+            print("Error: Secret name cannot be empty")
+            sys.exit(1)
+
+    # Prompt for secret value if not provided, using getpass to hide input
+    if not secret_value:
+        secret_value = getpass(f"Enter value for secret '{secret_name}': ").strip()
+        if not secret_value:
+            print("Error: Secret value cannot be empty")
+            sys.exit(1)
+        
+        # Show masked preview
+        visible_chars = len(secret_value) // 4  # Show last 25% of characters
+        masked_value = '*' * (len(secret_value) - visible_chars) + secret_value[-visible_chars:]
+        confirm = input(f"\nAdd secret '{secret_name}' with value '{masked_value}'? [y/N] ").lower()
+        if confirm != 'y':
+            print("Cancelled")
+            sys.exit(0)
+
+    try:
+        g = Github(token)
+        org_obj = g.get_organization(org)
+        repo = org_obj.get_repo(repo_name)
+        
+        repo.create_secret(secret_name, secret_value)
+        print(f"✓ Successfully added secret '{secret_name}' to {repo_name}")
+
+    except GithubException as e:
+        if e.status == 404:
+            print(f"Error: Repository '{repo_name}' not found or you don't have access to it")
+        elif e.status == 401:
+            print("Error: Invalid GitHub token")
+        else:
+            print(f"Error: {e.data.get('message', str(e))}")
+        sys.exit(1)
+
+
 def list_org_secrets():
     """List all organization secrets."""
     token = get_token()
@@ -211,6 +261,11 @@ def main():
     secrets_subparsers = secrets_parser.add_subparsers(dest='secrets_command')
     secrets_ls_parser = secrets_subparsers.add_parser('ls', help='List organization secrets')
 
+    # Add secret command
+    addsecret_parser = repo_subparsers.add_parser('addsecret', help='Add a secret to the repository')
+    addsecret_parser.add_argument('--name', help='Name of the secret')
+    addsecret_parser.add_argument('--value', help='Value of the secret (not recommended, use interactive prompt instead)')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -248,6 +303,8 @@ def main():
       remove_user_from_repo(args.repo_name, args.username)
     elif args.command == 'repo' and args.repo_command == 'userls':
       list_users_in_repo(args.repo_name)
+    elif args.command == 'repo' and args.repo_command == 'addsecret':
+      add_secret_to_repo(args.repo_name, args.name, args.value)
     elif args.command == 'secrets' and args.secrets_command == 'ls':
       list_org_secrets()
     else:
