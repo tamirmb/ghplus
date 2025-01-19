@@ -1,13 +1,14 @@
 import sys
 import json
+import getpass
 from pathlib import Path
-from src.interfaces.config import ConfigInterface
+from ghsettings.interfaces.config import ConfigInterface
 
 
 class JsonConfig(ConfigInterface):
     def __init__(self, filename="config.json"):
         # Create config directory in user's home directory
-        self.config_dir = Path.home() / ".ghp"
+        self.config_dir = Path.home() / ".ghsettings"
         self.file_path = self.config_dir / filename
 
         # Create config directory if it doesn't exist
@@ -45,5 +46,22 @@ class JsonConfig(ConfigInterface):
         """Check if the config is configured with required values"""
         if not self.config.get("token"):
             print("Error: GitHub token not configured")
-            print("Please run: ghp configure")
+            print("Please run: ghsettings configure")
             sys.exit(1)
+
+    def configure(self):
+        """Configure personal access token and username"""
+        print("Enter a personal access token and your username (or organization)")
+        print("Required scopes: repo\n")
+
+        token = getpass.getpass("Personal access token: ").strip()
+        username = input("Username (or org): ").strip()
+        if token:
+            self.set("token", token)
+
+        if username:
+            self.set("username", username)
+
+        self.save()
+
+        print("✓ Configuration saved")

@@ -1,38 +1,26 @@
-## GitHub Plus
+# GitHub Settings (ghsettings)
 
-A superset of the official GitHub CLI tools with a bunch of commands that they should have included, but for some reason didn't.
+Configure GitHub settings from the command line
 
-### Setup
-
-First, install `ghp` so you can use it from anywhere:
+## Installation
 
 ```bash
-sudo ./install.sh
+# Build and install package in current directory
+pip install -e .
+
+# Add Python bin directory to PATH
+
+
+# Set up your configuration file
+ghsettings configure
 ```
 
-Then, [generate a GitHub personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) with the following scopes:
+You can generate a personal access token at: https://github.com/settings/tokens
 
-- `repo`
-
-### Configuration
-
-Configure `ghp` and enter your personal access token:
+## Commands
 
 ```bash
-ghp configure
-```
-
-Your personal access token <ins>**is written as plaintext**</ins> to `~/.ghp/config`.
-
-### Commands
-
-```bash
-# Add a user to one of your repositories
-ghp repo [repo] adduser [user] [read|write|admin]
-
-# Remove a user from one of your repositories
-ghp repo [repo] rmuser [user]
-
-# List organization secrets
-ghp secrets ls
+ghsettings repo <repository> adduser <username> <read|write|admin>
+ghsettings repo <repository> deluser <username>
+ghsettings repo <repository> users
 ```
