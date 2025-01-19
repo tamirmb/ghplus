@@ -41,7 +41,7 @@ class RepoSettings(RepoSettingsInterface):
     def users(self, repo: str) -> None:
         """List all users in a repository"""
         try:
-            spinner = Halo(text="Fetching users...", spinner="dots")
+            spinner = Halo(text="Loading users...", spinner="dots")
             spinner.start()
 
             repository = self.gh.get_repo(f"{self.user}/{repo}")
